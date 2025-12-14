@@ -16,11 +16,13 @@ function createCardElement(card) {
     // 图片部分
     const $imageContainer = $('<div>').addClass('card-image');
     if (card.image) {
-        // 如果是相对路径，添加API基础URL
+        // 处理图片URL
         let imageUrl = card.image;
-        if (imageUrl.startsWith('images/')) {
-            imageUrl = `http://localhost:8080/${imageUrl}`;
+        // 如果是相对路径（本地图片），添加API基础URL
+        if (imageUrl.startsWith('images/') && API_BASE_URL) {
+            imageUrl = `${API_BASE_URL.replace('/api', '')}/${imageUrl}`;
         }
+        // CDN图片（http://或https://开头）直接使用
         const $img = $('<img>').attr('src', imageUrl).attr('alt', card.title); // 属性操作：设置src和alt
         $img.on('error', function() {
             $(this).replaceWith($('<div>').text('🖼️')); // DOM操作：替换元素

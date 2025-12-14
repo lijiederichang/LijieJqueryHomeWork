@@ -100,23 +100,56 @@ function submitCardForm() {
     // 获取上传的图片文件
     const imageFile = $('#cardImage')[0].files[0];
     
-    // 使用FormData上传文件 - 使用jQuery Ajax
-    const formDataObj = new FormData();
+    // 处理图片：转换为Base64或URL
+    let imageData = '';
     if (imageFile) {
-        formDataObj.append('image', imageFile);
+        // 使用FileReader转换为Base64
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imageData = e.target.result;
+            // 继续提交
+            submitCardData(formData, imageData);
+        };
+        reader.readAsDataURL(imageFile);
+    } else {
+        // 没有图片，直接提交
+        submitCardData(formData, '');
     }
+}
+
+// 提交卡片数据（调用后端API保存到MySQL）
+function submitCardData(formData, imageData) {
+    // 用户添加的数据：调用后端API保存到MySQL
+    const formDataObj = new FormData();
+    
+    // 如果有图片，需要转换为File对象
+    if (imageData && imageData.startsWith('data:image')) {
+        // Base64转Blob
+        const byteString = atob(imageData.split(',')[1]);
+        const mimeString = imageData.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: mimeString });
+        const file = new File([blob], 'image.jpg', { type: mimeString });
+        formDataObj.append('image', file);
+    }
+    
     formDataObj.append('title', formData.title);
     formDataObj.append('description', formData.description);
     formDataObj.append('category', formData.category);
     formDataObj.append('author', formData.author);
     
-    // 调用后端API创建卡片
+    // 调用后端API保存到MySQL
     $.ajax({
         url: `${API_BASE_URL}/cards`,
         type: 'POST',
         data: formDataObj,
         processData: false,
         contentType: false,
+        timeout: 5000,
         success: function(response) {
             if (response.success) {
                 showFormMessage('卡片添加成功！', 'success');
@@ -138,11 +171,15 @@ function submitCardForm() {
             }
         },
         error: function(xhr, status, error) {
-            let errorMsg = '添加卡片失败';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
+            // 后端不可用，提示用户
+            let errorMsg = '后端服务器不可用，无法保存数据';
+            if (xhr.status === 0) {
+                errorMsg = '无法连接到后端服务器，请确保后端服务已启动';
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
                 errorMsg = xhr.responseJSON.message;
             }
             showFormMessage(errorMsg, 'error');
+            console.error('保存失败:', error);
         }
     });
 }
@@ -162,45 +199,81 @@ function initEditCardPage() {
         return;
     }
     
-    // 从后端API加载卡片数据
-    $.ajax({
-        url: `${API_BASE_URL}/cards/${cardId}`,
-        type: 'GET',
-        success: function(response) {
-            if (response.success) {
-                const card = response.data;
-                // 填充表单
-                $('#cardTitle').val(card.title);
-                $('#cardDescription').val(card.description);
-                $('#cardCategory').val(card.category);
-                $('#cardAuthor').val(card.author || '');
-                
-                // 显示当前图片
-                if (card.imagePath) {
-                    let imageUrl = card.imagePath;
-                    if (imageUrl.startsWith('images/')) {
-                        imageUrl = `http://localhost:8080/${imageUrl}`;
-                    }
-                    const $currentImg = $('<img>').attr('src', imageUrl).addClass('preview-image');
-                    $('#currentImage').html('<label>当前图片：</label>').append($currentImg);
-                }
-                
-                // 保存卡片ID到表单
-                $('#cardForm').data('card-id', cardId);
-            } else {
-                showFormMessage('加载卡片失败', 'error');
-                setTimeout(function() {
-                    window.location.href = 'index.html';
-                }, 2000);
-            }
-        },
-        error: function() {
-            showFormMessage('加载卡片失败', 'error');
+    // 检查是否是示例数据（ID: 1001-1020）
+    const isDemoCardFlag = isDemoCard(cardId);
+    
+    if (isDemoCardFlag) {
+        // 从示例数据加载（包含localStorage中的修改）
+        const card = getDemoCardById(cardId);
+        if (card) {
+            fillEditForm(card, cardId);
+        } else {
+            showFormMessage('卡片不存在', 'error');
             setTimeout(function() {
                 window.location.href = 'index.html';
             }, 2000);
         }
-    });
+    } else {
+        // 从后端API加载卡片数据
+        $.ajax({
+            url: `${API_BASE_URL}/cards/${cardId}`,
+            type: 'GET',
+            timeout: 3000,
+            success: function(response) {
+                if (response.success) {
+                    const card = response.data;
+                    fillEditForm(card, cardId, card.imagePath);
+                } else {
+                    showFormMessage('加载卡片失败', 'error');
+                    setTimeout(function() {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                }
+            },
+            error: function() {
+                // 后端失败，尝试从本地数据查找
+                const card = cardsData.find(c => c.id === cardId);
+                if (card) {
+                    fillEditForm(card, cardId);
+                } else {
+                    showFormMessage('加载卡片失败', 'error');
+                    setTimeout(function() {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                }
+            }
+        });
+    }
+    
+    // 填充编辑表单
+    function fillEditForm(card, cardId, imagePath) {
+        // 填充表单
+        $('#cardTitle').val(card.title);
+        $('#cardDescription').val(card.description);
+        $('#cardCategory').val(card.category);
+        $('#cardAuthor').val(card.author || '');
+        
+        // 显示当前图片
+        const imageUrl = imagePath || card.image || '';
+        if (imageUrl) {
+            let displayUrl = imageUrl;
+            // 处理图片URL
+            if (imageUrl.startsWith('images/') && API_BASE_URL) {
+                displayUrl = `${API_BASE_URL.replace('/api', '')}/${imageUrl}`;
+            } else if (imageUrl.startsWith('data:image')) {
+                // Base64图片直接使用
+                displayUrl = imageUrl;
+            } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                // CDN图片直接使用
+                displayUrl = imageUrl;
+            }
+            const $currentImg = $('<img>').attr('src', displayUrl).addClass('preview-image');
+            $('#currentImage').html('<label>当前图片：</label>').append($currentImg);
+        }
+        
+        // 保存卡片ID到表单
+        $('#cardForm').data('card-id', cardId);
+    }
     
     // 表单提交 - 使用jQuery事件处理
     $('#cardForm').on('submit', function(e) {
@@ -250,61 +323,119 @@ function updateCardForm() {
         return;
     }
     
+    // 检查是否是示例数据
+    const isDemoCardFlag = isDemoCard(cardId);
+    
     // 获取上传的图片文件
     const imageFile = $('#cardImage')[0].files[0];
     
-    // 使用FormData更新卡片（支持文件上传）
-    const formDataObj = new FormData();
+    // 处理图片
     if (imageFile) {
-        formDataObj.append('image', imageFile);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imageData = e.target.result;
+            updateCardData(cardId, formData, imageData, isDemoCardFlag);
+        };
+        reader.readAsDataURL(imageFile);
+    } else {
+        // 没有新图片，保持原图片
+        updateCardData(cardId, formData, null, isDemoCardFlag);
     }
-    formDataObj.append('title', formData.title);
-    formDataObj.append('description', formData.description);
-    formDataObj.append('category', formData.category);
-    formDataObj.append('author', formData.author);
-    
-    // 调用后端API更新卡片（使用POST方法支持文件上传）
-    $.ajax({
-        url: `${API_BASE_URL}/cards/${cardId}/update`,
-        type: 'POST',
-        data: formDataObj,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            if (response.success) {
-                showFormMessage('卡片更新成功！', 'success');
-                
-                // 动画效果：表单淡出
-                $('#cardForm').fadeOut(300, function() {
-                    $('#formMessage').delay(2000).fadeOut(300);
-                });
-                
-                // 3秒后跳转到详情页
-                setTimeout(function() {
-                    window.location.href = `detail.html?id=${cardId}`;
-                }, 3000);
-            } else {
-                showFormMessage('更新失败: ' + response.message, 'error');
-            }
-        },
-        error: function(xhr, status, error) {
-            let errorMsg = '更新卡片失败';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMsg = xhr.responseJSON.message;
-            } else if (xhr.responseText) {
-                try {
-                    const errorResponse = JSON.parse(xhr.responseText);
-                    if (errorResponse.message) {
-                        errorMsg = errorResponse.message;
-                    }
-                } catch (e) {
-                    errorMsg = '更新卡片失败: ' + error;
+}
+
+// 更新卡片数据
+function updateCardData(cardId, formData, imageData, isDemoCardFlag) {
+    if (isDemoCardFlag) {
+        // 示例数据：更新到localStorage（不调用后端）
+        const success = updateDemoCard(cardId, {
+            title: formData.title,
+            description: formData.description,
+            category: formData.category,
+            author: formData.author,
+            image: imageData || undefined
+        });
+        
+        if (success) {
+            // 更新当前数据
+            const index = cardsData.findIndex(c => c.id === cardId);
+            if (index !== -1) {
+                cardsData[index] = {
+                    ...cardsData[index],
+                    title: formData.title,
+                    description: formData.description,
+                    category: formData.category,
+                    author: formData.author
+                };
+                if (imageData) {
+                    cardsData[index].image = imageData;
                 }
             }
-            showFormMessage(errorMsg, 'error');
-            console.error('更新错误:', xhr, status, error);
+            
+            showFormMessage('示例卡片更新成功！', 'success');
+            $('#cardForm').fadeOut(300, function() {
+                $('#formMessage').delay(2000).fadeOut(300);
+            });
+            
+            setTimeout(function() {
+                window.location.href = `detail.html?id=${cardId}`;
+            }, 3000);
+        } else {
+            showFormMessage('更新失败', 'error');
         }
-    });
+    } else {
+        // 用户数据：调用后端API更新到MySQL
+        const formDataObj = new FormData();
+        
+        // 如果有新图片，转换为File对象
+        if (imageData && imageData.startsWith('data:image')) {
+            const byteString = atob(imageData.split(',')[1]);
+            const mimeString = imageData.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: mimeString });
+            const file = new File([blob], 'image.jpg', { type: mimeString });
+            formDataObj.append('image', file);
+        }
+        
+        formDataObj.append('title', formData.title);
+        formDataObj.append('description', formData.description);
+        formDataObj.append('category', formData.category);
+        formDataObj.append('author', formData.author);
+        
+        $.ajax({
+            url: `${API_BASE_URL}/cards/${cardId}/update`,
+            type: 'POST',
+            data: formDataObj,
+            processData: false,
+            contentType: false,
+            timeout: 5000,
+            success: function(response) {
+                if (response.success) {
+                    showFormMessage('卡片更新成功！', 'success');
+                    $('#cardForm').fadeOut(300, function() {
+                        $('#formMessage').delay(2000).fadeOut(300);
+                    });
+                    setTimeout(function() {
+                        window.location.href = `detail.html?id=${cardId}`;
+                    }, 3000);
+                } else {
+                    showFormMessage('更新失败: ' + response.message, 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMsg = '后端服务器不可用，无法更新数据';
+                if (xhr.status === 0) {
+                    errorMsg = '无法连接到后端服务器，请确保后端服务已启动';
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                showFormMessage(errorMsg, 'error');
+            }
+        });
+    }
 }
 
 

@@ -42,10 +42,40 @@ function deleteCard(cardId, $cardElement, callback) {
         return;
     }
     
-    // 调用后端API删除卡片
+    // 检查是否是示例数据（ID: 1001-1020）
+    const isDemoCardFlag = isDemoCard(cardId);
+    
+    if (isDemoCardFlag) {
+        // 示例数据：本地删除（标记为已删除，不调用后端）
+        deleteDemoCard(cardId);
+        
+        // 从当前数据中移除（示例数据删除后，刷新页面会恢复）
+        cardsData = cardsData.filter(c => c.id !== cardId);
+        
+        // 如果提供了卡片元素，执行删除动画
+        if ($cardElement) {
+            $cardElement.fadeOut(300, function() {
+                $(this).remove(); // DOM操作：删除元素
+            });
+        }
+        
+        showToast('示例卡片已删除', 'success');
+        
+        // 如果提供了回调函数，执行回调
+        if (callback) {
+            callback();
+        } else {
+            // 重新渲染卡片
+            renderCards(cardsData);
+        }
+        return;
+    }
+    
+    // 用户数据或后端数据：调用后端API删除
     $.ajax({
         url: `${API_BASE_URL}/cards/${cardId}`,
         type: 'DELETE',
+        timeout: 3000,
         success: function(response) {
             if (response.success) {
                 showToast('卡片删除成功', 'success');
@@ -75,11 +105,15 @@ function deleteCard(cardId, $cardElement, callback) {
             }
         },
         error: function(xhr, status, error) {
-            let errorMsg = '删除卡片失败';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMsg = xhr.responseJSON.message;
+            // API失败，尝试本地删除
+            cardsData = cardsData.filter(c => c.id !== cardId);
+            if ($cardElement) {
+                $cardElement.fadeOut(300, function() {
+                    $(this).remove();
+                });
             }
-            showToast(errorMsg, 'error');
+            showToast('卡片已从本地删除', 'success');
+            if (callback) callback();
         }
     });
 }

@@ -5,11 +5,45 @@ function toggleLike(cardId, $button) {
     const card = cardsData.find(c => c.id === cardId);
     if (!card) return;
     
-    // 调用后端API点赞/取消点赞
+    // 检查是否是演示数据（ID >= 1000）
+    const isDemoData = cardId >= 1000;
+    
+    if (isDemoData) {
+        // 演示模式：直接更新本地数据
+        card.liked = !card.liked;
+        card.likes += card.liked ? 1 : -1;
+        
+        // 保存到localStorage
+        saveDemoLikeStatus(cardId, card.liked);
+        
+        // DOM操作：修改类名和内容
+        if (card.liked) {
+            $button.addClass('liked').html('❤️'); // 属性操作：修改HTML
+            // 动画效果：缩放动画
+            $button.animate({
+                transform: 'scale(1.2)'
+            }, 200, function() {
+                $(this).animate({
+                    transform: 'scale(1)'
+                }, 200);
+            });
+        } else {
+            $button.removeClass('liked').html('🤍');
+        }
+        
+        // 更新点赞数
+        $button.find('.like-count').text(card.likes); // 层次选择器：查找子元素
+        
+        showToast(card.liked ? '已点赞' : '已取消点赞', 'success');
+        return;
+    }
+    
+    // 正常模式：调用后端API
     $.ajax({
         url: `${API_BASE_URL}/cards/${cardId}/like`,
         type: 'POST',
         data: { userId: userId },
+        timeout: 3000, // 3秒超时
         success: function(response) {
             if (response.success) {
                 card.liked = response.data.liked;
