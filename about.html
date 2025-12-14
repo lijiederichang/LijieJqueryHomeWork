@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>关于我们 - 媒体卡片墙</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <h1>🎨 媒体卡片墙</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="category.html">分类</a></li>
+                <li><a href="add-card.html">添加卡片</a></li>
+                <li><a href="favorites.html">我的喜欢</a></li>
+                <li><a href="about.html" class="active">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 关于页面内容 -->
+    <div class="container">
+        <div class="about-container">
+            <h2 class="page-title">关于媒体卡片墙</h2>
+            <div class="about-content">
+                <div class="about-section">
+                    <h3>项目简介</h3>
+                    <p>交互式媒体卡片墙是一个展示丰富内容的平台，用户可以浏览、搜索、筛选和添加各种类型的媒体卡片。每个卡片都包含文本、图片和互动元素，为用户提供良好的浏览体验。</p>
+                </div>
+                <div class="about-section">
+                    <h3>功能特点</h3>
+                    <ul class="feature-list">
+                        <li>✨ 精美的卡片墙展示</li>
+                        <li>🔍 强大的搜索和筛选功能</li>
+                        <li>❤️ 点赞互动功能</li>
+                        <li>➕ 添加自定义卡片</li>
+                        <li>📱 响应式设计，适配各种设备</li>
+                        <li>🎨 现代化的UI设计</li>
+                    </ul>
+                </div>
+                <div class="about-section">
+                    <h3>技术栈</h3>
+                    <div class="tech-stack">
+                        <span class="tech-tag">HTML5</span>
+                        <span class="tech-tag">CSS3</span>
+                        <span class="tech-tag">JavaScript</span>
+                        <span class="tech-tag">jQuery</span>
+                    </div>
+                </div>
+                <div class="about-section">
+                    <h3>设计理念</h3>
+                    <p>我们致力于创建一个既具有科技感又充满亲和力的平台，通过精心设计的界面和流畅的交互体验，让用户能够轻松浏览和分享精彩内容。每个细节都经过精心打磨，力求为用户提供最佳的使用体验。</p>
+                </div>
+            </div>
+            
+            <!-- 常见问题手风琴 -->
+            <div class="about-section">
+                <h3>常见问题</h3>
+                <div id="faqAccordion" class="accordion">
+                    <!-- 手风琴将通过jQuery动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 按依赖顺序加载JS文件 -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/accordion.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/about.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式媒体卡片墙 - 首页</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="jquery-3.7.1.min.js"></script>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <h1>🎨 媒体卡片墙</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="active">首页</a></li>
+                <li><a href="category.html">分类</a></li>
+                <li><a href="add-card.html">添加卡片</a></li>
+                <li><a href="favorites.html">我的喜欢</a></li>
+                <li><a href="about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 轮播图区域 -->
+    <div id="carouselContainer" class="container">
+        <!-- 轮播图将通过jQuery动态生成 -->
+    </div>
+
+    <!-- 搜索和筛选区域 -->
+    <div class="search-filter-section">
+        <div class="container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索卡片内容...">
+                <button id="searchBtn" class="btn-primary">🔍 搜索</button>
+            </div>
+            <div class="filter-box">
+                <label for="categoryFilter">分类筛选：</label>
+                <select id="categoryFilter" title="选择分类进行筛选">
+                    <option value="all">全部</option>
+                    <option value="technology">科技</option>
+                    <option value="art">艺术</option>
+                    <option value="nature">自然</option>
+                    <option value="sports">运动</option>
+                    <option value="music">音乐</option>
+                    <option value="game">游戏</option>
+                </select>
+                <button id="resetFilter" class="btn-secondary">重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 卡片墙容器 -->
+    <div class="container">
+        <div id="cardsContainer" class="cards-grid">
+            <!-- 卡片将通过jQuery动态生成 -->
+        </div>
+        <div id="noResults" class="no-results">
+            <p>没有找到匹配的卡片</p>
+        </div>
+    </div>
+
+    <!-- 返回顶部按钮 -->
+    <button id="backToTop" class="back-to-top">↑</button>
+
+    <!-- 提示消息 -->
+    <div id="messageToast" class="toast"></div>
+
+    <!-- 按依赖顺序加载JS文件 -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/card.js"></script>
+    <script src="js/like.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/carousel.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
+

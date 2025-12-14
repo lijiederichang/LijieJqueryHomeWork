@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - 页面未找到</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .error-container {
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        .error-code {
+            font-size: 8rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .error-message {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        .error-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <h1>🎨 媒体卡片墙</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">首页</a></li>
+                <li><a href="category.html">分类</a></li>
+                <li><a href="add-card.html">添加卡片</a></li>
+                <li><a href="favorites.html">我的喜欢</a></li>
+                <li><a href="about.html">关于</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="error-container">
+        <div class="error-code">404</div>
+        <div class="error-message">抱歉，您访问的页面不存在</div>
+        <div class="error-actions">
+            <a href="index.html" class="btn-primary">返回首页</a>
+            <a href="javascript:history.back()" class="btn-secondary">返回上一页</a>
+        </div>
+    </div>
+
+    <script src="jquery-3.7.1.min.js"></script>
+</body>
+</html>
+
